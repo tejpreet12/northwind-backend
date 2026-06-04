@@ -55,7 +55,9 @@ export const checkoutSessions = pgTable("checkout_sessions", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   polarCheckoutId: text("polar_checkout_id").unique(),
-  lineCheckout: jsonb("lines_checkout").$type<CheckoutSessionLine[]>().notNull(),
+  lineCheckout: jsonb("lines_checkout")
+    .$type<CheckoutSessionLine[]>()
+    .notNull(),
   currency: text("currency").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
@@ -64,3 +66,32 @@ export const checkoutSessions = pgTable("checkout_sessions", {
 
 // cascade = “delete children when parent is deleted”;
 // restrict = “don’t delete the parent if any child still points at it.”
+
+export const orders = pgTable("orders", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").$type<OrderStatus>().notNull().default("pending"),
+  polarCheckoutId: text("polar_checkout_id"),
+  polarOrderId: text("polar_order_id"),
+  totalCents: integer("total_cents").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const orderItems = pgTable("order_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orderId: uuid("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "restrict" }),
+  quantity: integer("quantity").notNull(),
+  unitPriceCents: integer("unit_price_cents").notNull(),
+});
