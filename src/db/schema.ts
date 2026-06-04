@@ -95,3 +95,28 @@ export const orderItems = pgTable("order_items", {
   quantity: integer("quantity").notNull(),
   unitPriceCents: integer("unit_price_cents").notNull(),
 });
+
+// a user can have many orders over time.
+export const userRelations = relations(users, ({ many }) => ({
+  orders: many(orders),
+}));
+
+// the same product can show up on many order lines.
+export const productsRelations = relations(orders, ({ many }) => ({
+  orderItems: many(orderItems),
+}));
+
+// each order belongs to exactly one user; each order can have many line items.
+export const ordersRelation = relations(orders, ({ one, many }) => ({
+  user: one(users, { fields: [orders.userId], references: [users.id] }),
+  items: many(orderItems),
+}));
+
+// each line item is for exactly one order and one product
+export const orderItemsRelation = relations(orderItems, ({ one }) => ({
+  order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
+  product: one(products, {
+    fields: [orderItems.productId],
+    references: [products.id],
+  }),
+}));
